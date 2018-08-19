@@ -1,16 +1,13 @@
-function [state_x, fn_all, ft_all, vn_all, vt_all, x_all, vn_err, vt_err] = box_discrete_update(itime, state_x0, params)
+function [state_x, fn_all, ft_all, vn_all, vt_all, vn_err, vt_err] = box_discrete_update(itime, state_x0, params)
 
 % Params
 m = params.m;
 I = params.I;
 g = params.g;
-mu = params.mu;
 h = params.h;
 stiction_tolerance = params.stiction_tolerance;
 relative_tolerance = params.relative_tolerance;
-
 ev = relative_tolerance * stiction_tolerance;
-ev2 = ev*ev;
 
 % State
 q0 = state_x0(1:3);
@@ -21,7 +18,6 @@ p_WBo = q0(1:2);
 %w = v(3);
 
 % Sizes
-nc = 4;
 nv = 3;
 
 p_BoC_W = calc_contact_points(q0, params.geometry);
@@ -47,100 +43,45 @@ tau = [0; -m*g; 0]; % + Jn'*fn + Jt'*ft;
 % Newton-Rapshon loop
 max_iters = 100;
 v = v0;
-Gn = zeros(nc, nv);
-Gt = zeros(nc, nv);
+lambda = zeros(nc, 1);
 M = [m, 0, 0;
      0, m, 0;
      0, 0, I];
 pstar = M*v0 + h*tau;
 
-% Compute rigid Delassus.
-Wnn = Jn * (M \ Jn');
-mtilde = pinv(Wnn);
-m0 = 1./diag(Wnn);
-
-alpha = 30.0; % 30 seems best compromise. Use lower alpha for high time steps for close to RT sims (low accuracy anyways).
-f0 = 1/(alpha*h);
-w0 = 2*pi*f0;
-
-k_num = w0*w0*m0;
-
-% a zeta = 2 might make more sense since what we want to accomplish is that
-% the normal velocity goes to zero in half a period. That is, from when 
-% the contact points starts going in with the initial normal velocity until
-% it finally comes out (or stays around zero). Notice that ONLY is half the
-% period of oscillation of the harmonic oscilator.
-zeta = 2.0;
-d_num = 2*zeta*w0*m0;
-
-if (itime==440)
-    xdot = -Jn*v;
-    assignin('base','M',M);
-    assignin('base','Wnn',Wnn);
-    assignin('base','Jn',Jn);
-    assignin('base','xx0',x0);
-    assignin('base','xxdot',xdot);
-    assignin('base','mtilde',mtilde);
-    assignin('base','m0',m0);
-    assignin('base','k_num',k_num);
-    assignin('base','d_num',d_num);   
-end
+% Problem data
+problem_data.M = M;
+problem_data.Jn = Jn;
+problem_data.Jt = Jt;
+problem_data.pstar = pstar;
 
 % Relaxation seems to help.
 w = 0.9;
 
 vn_err = 2*ev;
 vt_err = 2*ev;
-for it=1:max_iters
-    
+for it=1:max_iters 
     % Normal/tangential velocities
     vn = Jn*v;
     vt = Jt*v;
     
-    % Penetration distance and rate of change.    
-    xdot = -vn;
-    x = x0 + h * xdot;   
-       
-    % Normal force and gradients.
-    [fn, dfdx, dfdxdot] = calc_normal_force2(x, xdot, k_num, d_num);       
+    % Residuals and Jacobians.
+    [rv, rl, Rvv, Rvl, Rlv, Rll] = CalcResiduals(v, lambda, problem_data, params);
     
-    % Friction forces and gradients.
-    [ft, dft_dvt, dft_dfn] = calc_friction_force(vt, fn, params);
-        
-    % Check for norm of residual here so we get to compute the forces
-    % with the latest velocity update.
-    if (vn_err < ev && vt_err < ev) 
-        break;
-    end
-
-    % Residual
-    R = M*v - pstar;    
-    if (~isempty(fn))
-        R = R - h*Jn'*fn - h*Jt'*ft;
-    end
+    % Factorize and then solve in Matlab?
+    % We can use Cholesky for Rvv.
+    Rvvi = inv(Rvv);
     
-
-    % Normal forces Jacobian. Gn = dfn/dv.
-    for ic=1:nc
-        Gn(ic, :) = -(h*dfdx(ic)+dfdxdot(ic))*Jn(ic, :);
-    end
+    Rvvi_rv = Rvvi*rv;
+    A = Rll - Rlv*Rvvi*Rvl;  
+    p = -rl + Rlv*Rvvi_rv;
     
-    % Friction forces Jacobian. Gt = dft/dv
-    for ic=1:nc
-        Gt(ic, :) = dft_dvt(ic)*Jt(ic, :) + dft_dfn(ic) * Gn(ic, :);  
-    end
+    % lambda might be overconstrained. We use LSQ solution.
+    dl = A\p; %How to call explicitly in Matlab?
     
-    % System Jacobian. J = dRdv.
-    J = M - h*Jn'*Gn - h*Jt'*Gt;
-    
-    %if (norm(J-J') > 1.0e-16*norm(J))
-    %    msg = ['Matrix J is not symmetric. J = ' sprintf('\n') sprintf('%f %f %f\n',J)];
-    %    error(msg);
-    %end
-    
-    % Velocity update
-    dv = -J\R;
-        
+    % v should be unique (physics).
+    dv = -Rvvi_rv - Rvvi*Rvl*dl;           
+          
     dvn = Jn * dv;
     dvt = Jt * dv;
     
@@ -170,11 +111,27 @@ for it=1:max_iters
         end        
     end
     
-    % Update velocities.
+    % Update velocities and labmdas
     v = v + w*alpha*dv;
-        
+    lambda = lambda + w*alpha*dl;
+    
+    % Normal/tangential velocities
+    vn = Jn*v;
+    vt = Jt*v;
+    
+    % Errors
     vn_err = norm(dvn);
     vt_err = norm(dvt);
+    
+    % Check if converged in velocities ONLY (since lambda might still
+    % change for overconstrained systems even if bounded by the generalized
+    % contact forces).
+    if (vn_err < ev && vt_err < ev) 
+        % Compute fores for reporting.
+        fn = lambda;
+        ft = calc_friction_force(vt, fn, params);
+        break;
+    end        
 end
 
 if (vn_err > ev || vt_err > ev)
@@ -196,8 +153,5 @@ fn_all(idx) = fn;
 ft_all(idx) = ft;
 vn_all(idx) = vn;
 vt_all(idx) = vt;
-
-x_all = zeros(nc_max,1);
-x_all(idx) = x;
 
 

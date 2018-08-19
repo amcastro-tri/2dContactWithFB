@@ -4,13 +4,14 @@ lengths = [0.05, 0.1];
 I = m * (lengths(1)^2 + lengths(2)^2)/12.0;
 stiction_tolerance = 1.0e-5;
 relative_tolerance = 1e-3;
+FB_lambda = 0.9;
 mu = 0.5;
 y0 = 0.3;
 vx0 = -1.0;
 vy0 = 0.0;
 w0 = 0.0;
 sim_time = 2.0;
-h = 1.0e-3;
+h = 5.0e-3;
 
 % Define the geometry for a box.
 nc_max = 4;
@@ -37,6 +38,7 @@ params.I = I;
 params.g = g;
 params.stiction_tolerance = stiction_tolerance;
 params.relative_tolerance = relative_tolerance;
+params.FB_lambda = FB_lambda;
 params.mu = mu;
 params.h = h;
 params.geometry = polygon;
@@ -56,7 +58,7 @@ vn_err = zeros(nsteps, 1);
 vt_err = zeros(nsteps, 1);
 for it=1:nsteps
     tt(it) = it * h;
-    [x, fn(it,:), ft(it,:), vn(it,:), vt(it,:), xp(it,:), vn_err(it), vt_err(it)] = box_discrete_update(it, x0, params);
+    [x, fn(it,:), ft(it,:), vn(it,:), vt(it,:), vn_err(it), vt_err(it)] = box_discrete_update(it, x0, params);
     
 %     if (any(fn(it,:) > 0))
 %         fn(it,:)
