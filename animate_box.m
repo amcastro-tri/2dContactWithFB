@@ -3,7 +3,7 @@ close all;
 skip = floor(0.04/h); 
 scale = 0.5;
 %wsz = [-0.6 -0.2 0 0.4];
-wsz = [-0.6 0 0 0.4];
+wsz = [-0.6 0 -0.002 0.4];
 start_step = 1;
 end_step = size(tt);
 %skip=1;
@@ -12,8 +12,10 @@ end_step = size(tt);
 a = lengths(1);
 b = lengths(2);
 
-X       = [-a a  a -a] / 2;
-Y       = [-b -b b  b] / 2; 
+p_BoC = params.geometry();
+X       = p_BoC(1, :);
+Y       = p_BoC(2, :);
+nc_max = size(p_BoC, 2);
  
  hSquare = fill(X,Y,'r');
 
@@ -35,11 +37,11 @@ Y       = [-b -b b  b] / 2;
      s = sin(theta);
      R_WB = [c, -s; s, c];
      
-     C       = repmat([x z], 4, 1)';
+     C       = repmat([x z], nc_max, 1)';
      
      V = R_WB * V0 + C;             % do the rotation relative to the centre of the square
      
-     fill(V(1,:),V(2,:),'r');
+     fill(V(1,:),V(2,:),'b', 'LineWidth', 4, 'EdgeColor','red');
      %set(hSquare,'Vertices',V');    % update the vertices        
      hold on     
      

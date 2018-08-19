@@ -1,12 +1,9 @@
 function [state_x, fn_all, ft_all, vn_all, vt_all, x_all, vn_err, vt_err] = box_discrete_update(itime, state_x0, params)
 
 % Params
-lengths = params.lengths;
 m = params.m;
 I = params.I;
 g = params.g;
-k = params.k;
-d = params.d;
 mu = params.mu;
 h = params.h;
 stiction_tolerance = params.stiction_tolerance;
@@ -27,11 +24,12 @@ p_WBo = q0(1:2);
 nc = 4;
 nv = 3;
 
-p_BoC_W = calc_contact_points(q0, lengths);
+p_BoC_W = calc_contact_points(q0, params.geometry);
+nc_max = size(p_BoC_W, 2);
 
 % Calc signed distance at t = t0.
-x0_all = zeros(4,1);
-for ic = 1:4
+x0_all = zeros(nc_max,1);
+for ic = 1:nc_max
     p_WC = p_WBo + p_BoC_W(:, ic);
     x0_all(ic) = -p_WC(2);
 end
@@ -41,23 +39,6 @@ nc = length(x0);
 p_BoC_W = p_BoC_W(:, idx);
 
 [Jn, Jt] = calc_jacobians(p_BoC_W);
-
-
-
-% Tangent velocities.
-%vt = Jt * v;
-
-% Tangent (friction) forces.
-% ft = zeros(4, 1);
-% for ic=1:4
-%     vt_ic = vt(ic);
-%     slip = abs(vt_ic);
-%     mu_ic = stribeck_friction2(slip, mu, stiction_tolerance);
-%     
-%     sign = vt_ic / sqrt(vt_ic^2 + ev2);
-%     
-%     ft(ic) = -mu_ic * fn(ic) * sign;    
-% end
 
 % Genralized forces
 tau = [0; -m*g; 0]; % + Jn'*fn + Jt'*ft;
@@ -104,6 +85,8 @@ if (itime==440)
     assignin('base','k_num',k_num);
     assignin('base','d_num',d_num);   
 end
+
+% Relaxation seems to help.
 w = 0.9;
 
 vn_err = 2*ev;
@@ -204,17 +187,17 @@ end
 q = q0 + h*v;
 state_x = [q; v];
 
-fn_all = zeros(4, 1);
-ft_all = zeros(4, 1);
-vn_all = zeros(4, 1);
-vt_all = zeros(4, 1);
+fn_all = zeros(nc_max, 1);
+ft_all = zeros(nc_max, 1);
+vn_all = zeros(nc_max, 1);
+vt_all = zeros(nc_max, 1);
 
 fn_all(idx) = fn;
 ft_all(idx) = ft;
 vn_all(idx) = vn;
 vt_all(idx) = vt;
 
-x_all = zeros(4,1);
+x_all = zeros(nc_max,1);
 x_all(idx) = x;
 
 

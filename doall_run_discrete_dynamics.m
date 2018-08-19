@@ -1,6 +1,6 @@
-lengths = [0.05, 0.1];
 m = 0.1;
 g = 9.81;
+lengths = [0.05, 0.1];
 I = m * (lengths(1)^2 + lengths(2)^2)/12.0;
 stiction_tolerance = 1.0e-5;
 relative_tolerance = 1e-3;
@@ -12,38 +12,46 @@ w0 = 0.0;
 sim_time = 2.0;
 h = 1.0e-3;
 
-penetration_allowance = 1.0e-3;
+% Define the geometry for a box.
+nc_max = 4;
+p_BoC = zeros(2, nc_max);
+p_BoC(:, 1) = [-lengths(1); -lengths(2)] / 2;
+p_BoC(:, 2) = [ lengths(1); -lengths(2)] / 2;
+p_BoC(:, 3) = [ lengths(1);  lengths(2)] / 2;
+p_BoC(:, 4) = [-lengths(1);  lengths(2)] / 2;
+box = @() p_BoC;
 
-% Estimate contact stiffness/damping
-damping_ratio = 1.0;
-k = m*g/penetration_allowance;
-omega = sqrt(k/m);
-time_scale = 1.0/omega
-d = damping_ratio * time_scale / penetration_allowance;
+% Define the geometry for an n-edges polygon.
+num_sides = 5;
+radius = 0.05;
+t = (1/num_sides/2:1/num_sides:1)*2*pi;
+nc_max = num_sides;
+p_BoC = zeros(2, nc_max);
+p_BoC(1, :) = cos(t) * radius;
+p_BoC(2, :) = sin(t) * radius;
+polygon = @() p_BoC;
 
 % Save parameters into a struct
-params.lengths = lengths;
 params.m = m;
 params.I = I;
 params.g = g;
 params.stiction_tolerance = stiction_tolerance;
 params.relative_tolerance = relative_tolerance;
-params.k = k;
-params.d = d;
 params.mu = mu;
 params.h = h;
+params.geometry = polygon;
 
 x0 = [0; y0; 0; 
       vx0; vy0; w0];
 
 nsteps = ceil(sim_time/h);
 xx = zeros(nsteps, 6);
-fn = zeros(nsteps, 4);
-ft = zeros(nsteps, 4);
+fn = zeros(nsteps, nc_max);
+ft = zeros(nsteps, nc_max);
 tt = zeros(nsteps, 1);
-vn = zeros(nsteps, 4);
-vt = zeros(nsteps, 4);
-xp = zeros(nsteps, 4);
+vn = zeros(nsteps, nc_max);
+vt = zeros(nsteps, nc_max);
+xp = zeros(nsteps, nc_max);
 vn_err = zeros(nsteps, 1);
 vt_err = zeros(nsteps, 1);
 for it=1:nsteps
