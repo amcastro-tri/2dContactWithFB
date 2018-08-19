@@ -1,9 +1,9 @@
-close all;
+%close all;
 
-skip = floor(0.04/h); 
+skip = floor(0.01/h); 
 scale = 0.5;
 %wsz = [-0.6 -0.2 0 0.4];
-wsz = [-0.6 0 -0.002 0.4];
+wsz = [-0.2 0.5 -0.002 0.4];
 start_step = 1;
 end_step = size(tt);
 %end_step = 1;
