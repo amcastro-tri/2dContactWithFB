@@ -1,17 +1,17 @@
 m = 0.1;
 g = 9.81;
-lengths = [0.05, 0.1];
+lengths = [0.05, 0.15];
 I = m * (lengths(1)^2 + lengths(2)^2)/12.0;
 stiction_tolerance = 1.0e-5;
 relative_tolerance = 1e-3;
 FB_lambda = 0.9;
-mu = 0.5;
+mu = 0.35;
 y0 = 0.3;
-vx0 = -1.0;
+vx0 = -1.5;
 vy0 = 0.0;
 w0 = 0.0;
 sim_time = 2.0;
-h = 5.0e-3;
+h = 1.0e-2;
 
 % Define the geometry for a box.
 nc_max = 4;
@@ -32,6 +32,21 @@ p_BoC(1, :) = cos(t) * radius;
 p_BoC(2, :) = sin(t) * radius;
 polygon = @() p_BoC;
 
+%Define the geometry for a box with multicontact (overconstrained).
+nc_max = 8;
+p_BoC = zeros(2, nc_max);
+p_BoC(:, 1) = [-lengths(1); -lengths(2)] / 2;
+p_BoC(:, 2) = [0; -lengths(2)] / 2;
+p_BoC(:, 3) = [ lengths(1); -lengths(2)] / 2;
+p_BoC(:, 4) = [ lengths(1); 0] / 2;
+p_BoC(:, 5) = [ lengths(1);  lengths(2)] / 2;
+p_BoC(:, 6) = [0;  lengths(2)] / 2;
+p_BoC(:, 7) = [-lengths(1);  lengths(2)] / 2;
+p_BoC(:, 8) = [-lengths(1);  0] / 2;
+
+box2 = @() p_BoC;
+
+
 % Save parameters into a struct
 params.m = m;
 params.I = I;
@@ -41,7 +56,7 @@ params.relative_tolerance = relative_tolerance;
 params.FB_lambda = FB_lambda;
 params.mu = mu;
 params.h = h;
-params.geometry = polygon;
+params.geometry = box2;
 
 x0 = [0; y0; 0; 
       vx0; vy0; w0];

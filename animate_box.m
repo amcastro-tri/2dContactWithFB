@@ -6,6 +6,7 @@ scale = 0.5;
 wsz = [-0.6 0 -0.002 0.4];
 start_step = 1;
 end_step = size(tt);
+%end_step = 1;
 %skip=1;
 
 
