@@ -127,8 +127,10 @@ for it=1:max_iters
     % change for overconstrained systems even if bounded by the generalized
     % contact forces).
     if (vn_err < ev && vt_err < ev) 
-        % Compute fores for reporting.
-        fn = lambda;
+        % Compute fores for reporting by LSQ.
+        tau_n = Jn' * lambda;
+        fn = pinv(Jn')*tau_n;
+        %fn = lambda;
         ft = calc_friction_force(vt, fn, params);
         break;
     end        

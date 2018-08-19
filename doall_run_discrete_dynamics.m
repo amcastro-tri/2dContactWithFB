@@ -1,6 +1,6 @@
 m = 0.1;
 g = 9.81;
-lengths = [0.05, 0.15];
+lengths = [0.05, 0.1];
 I = m * (lengths(1)^2 + lengths(2)^2)/12.0;
 stiction_tolerance = 1.0e-5;
 relative_tolerance = 1e-3;
@@ -11,7 +11,7 @@ vx0 = -1.5;
 vy0 = 0.0;
 w0 = 0.0;
 sim_time = 2.0;
-h = 1.0e-2;
+h = 1.0e-3;
 
 % Define the geometry for a box.
 nc_max = 4;
