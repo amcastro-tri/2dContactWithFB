@@ -4,17 +4,17 @@ rod_length = 0.2;
 m = 0.1;
 g = 9.81;
 I = m * rod_length * rod_length / 12.0;
-stiction_tolerance = 1.0e-5;
-relative_tolerance = 1e-4; %INVESTIGATE!: Some convergence issues observed for small time step (1e-5) and tole=1e-3 at the singularity in fn.
-FB_lambda = 0.9;
+stiction_tolerance = 1.0e-4;
+relative_tolerance = 1e-6; %INVESTIGATE!: Some convergence issues observed for small time step (1e-5) and tole=1e-3 at the singularity in fn.
+FB_lambda = 1.0;
 mu = 1.5;  % > 4/3
 theta0 = -20 / 180 * pi;
-vx0 = 3.0;
-vy0 = 0.0;
-w0 = -3 * (2 * pi);
+w0 = -1.5 * (2 * pi);
+vx0 = 2.0;
+vy0 = -rod_length/2*w0*cos(-theta0); % Notice w0 has the sign of phi (negative)
 y0 = rod_length/2*sin(-theta0);
 sim_time = 0.6;
-h = 1.0e-5;
+h = 5.0e-4;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % m = 0.1;

@@ -29,7 +29,7 @@ for ic = 1:nc_max
     p_WC = p_WBo + p_BoC_W(:, ic);
     x0_all(ic) = -p_WC(2);
 end
-idx = find(x0_all > 0);
+idx = find(x0_all > -1e-4);
 x0 = x0_all(idx);
 nc = length(x0);
 p_BoC_W = p_BoC_W(:, idx);
@@ -55,7 +55,7 @@ problem_data.Jn = Jn;
 problem_data.Jt = Jt;
 problem_data.pstar = pstar;
 
-% Relaxation seems to help.
+% Relaxploation seems to help.
 w = 0.9;
 
 vn_err = 2*ev;

@@ -16,7 +16,8 @@ Rvv =  M - h*Jt'*diag(dft_dvt)*Jt; % This is SPD! ==> invertible.
 Rvl = -h * Jn' - h*Jt'*diag(dft_dfn);
 
 % Residual and Jacobians in lambda.
-rl = FischerBurmeisterLambda(vn, lambda, FB_lambda);
-Rlv = diag(FischerBurmeisterLambdaGradX(vn, lambda, FB_lambda)) * Jn;
-Rll = diag(FischerBurmeisterLambdaGradY(vn, lambda, FB_lambda)); %Diagonal matrix. It might have zero diagonal elements.
+eps = 1e-10;
+rl = FischerBurmeisterLambda(vn, lambda, FB_lambda, eps);
+Rlv = diag(FischerBurmeisterLambdaGradX(vn, lambda, FB_lambda, eps)) * Jn;
+Rll = diag(FischerBurmeisterLambdaGradY(vn, lambda, FB_lambda, eps)); %Diagonal matrix. It might have zero diagonal elements.
  
