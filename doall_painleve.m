@@ -20,7 +20,7 @@ relative_tolerance = 1e-6; %INVESTIGATE!: Some convergence issues observed for s
 FB_lambda = 1.0;
 
 % Time stepping.
-h = 5.0e-4;
+h = 1.0e-4;
 sim_time = 0.6;
 
 % Define the geometry for the rod
